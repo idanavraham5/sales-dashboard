@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>דשבורד נציגים — יש לי זכות</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg-1: #eef2fb; --bg-2: #e6ebf7;
+  --card: #ffffff;
+  --panel-grad: linear-gradient(95deg, #dbe6fc 0%, #e8e3f7 100%);
+  --ink: #16213e; --ink-soft: #5b6478; --ink-mute: #9aa2b5;
+  --navy: #1b2a4a; --blue: #2f6df0; --blue-d: #1e3a5f;
+  --orange: #ff6a2c; --orange-d: #e8531a;
+  --green: #1fa971; --purple: #7b5fc9;
+  --gold-1:#f6d976; --gold-2:#d4a437; --gold-3:#a87b1e;
+  --silver-1:#e8ecf2; --silver-2:#b8c0cc; --silver-3:#8a93a3;
+  --bronze-1:#e8b487; --bronze-2:#c87b3f; --bronze-3:#9a5a28;
+  --track: #eef0f5; --line: #e8ebf2;
+  --shadow: 0 6px 22px rgba(27,42,74,.07);
+}
+html,body { height:100%; }
+body {
+  font-family:'Heebo',sans-serif;
+  background:radial-gradient(1200px 600px at 70% -10%, #f3f6ff 0%, var(--bg-1) 45%, var(--bg-2) 100%);
+  color:var(--ink); overflow:hidden; height:100vh; display:flex; flex-direction:column;
+}
+
+/* ---------- TOP BAR ---------- */
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:14px 26px 10px; gap:18px; }
+.clock-box { display:flex; align-items:center; gap:10px; }
+.clock { background:var(--navy); color:#fff; font-weight:800; font-size:30px; letter-spacing:1px;
+  padding:8px 18px; border-radius:14px; font-variant-numeric:tabular-nums; box-shadow:var(--shadow); }
+.date-box { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:7px 14px;
+  display:flex; flex-direction:column; align-items:center; line-height:1.25; box-shadow:var(--shadow); }
+.date-greg { font-weight:800; font-size:15px; }
+.date-heb { font-size:12px; color:var(--ink-soft); font-weight:600; }
+
+.center-top { flex:1; display:flex; flex-direction:column; align-items:center; gap:10px; }
+.quote { font-size:23px; font-weight:800; color:var(--blue-d); text-align:center; transition:opacity .45s ease;
+  line-height:1.25; letter-spacing:-0.2px;
+  background:linear-gradient(180deg,#ffffff,#f3f7ff);
+  border:2px solid #cddcf7; border-radius:16px;
+  padding:11px 38px; box-shadow:0 6px 18px rgba(30,58,95,.09);
+  max-width:1020px; min-height:84px;
+  display:flex; align-items:center; justify-content:center; }
+.total-pill { display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,#3f7bf6,#6a5bd6); color:#fff; border-radius:18px; padding:6px 30px;
+  box-shadow:0 8px 20px rgba(63,123,246,.35); }
+.total-pill .lbl { font-size:12px; font-weight:600; opacity:.9; }
+.total-pill .num { font-size:30px; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; }
+
+.brand { display:flex; align-items:center; }
+.brand-img { height:128px; width:auto; display:block; background:#fff; border-radius:16px;
+  padding:8px 20px; box-shadow:var(--shadow); }
+
+/* ---------- MAIN GRID ---------- */
+.main { flex:1; display:grid; grid-template-columns:1fr 430px; gap:16px; padding:6px 22px 12px; min-height:0; }
+.col { display:flex; flex-direction:column; gap:14px; min-height:0; }
+
+.panel { background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); overflow:hidden; display:flex; flex-direction:column; }
+.panel-head { background:var(--panel-grad); padding:11px 18px; display:flex; align-items:center; justify-content:space-between; }
+.panel-title { font-weight:800; font-size:15px; color:var(--blue-d); display:flex; align-items:center; gap:8px; }
+.live-dot { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:800; color:var(--orange); }
+.live-dot::before { content:''; width:8px; height:8px; border-radius:50%; background:var(--orange); animation:pulse 1.4s infinite; }
+@keyframes pulse { 0%,100%{opacity:1; transform:scale(1);} 50%{opacity:.35; transform:scale(.7);} }
+
+/* ---------- PODIUM ---------- */
+.podium { flex:1; display:flex; align-items:flex-end; justify-content:center; gap:16px; padding:8px 22px 0; }
+.pod { display:flex; flex-direction:column; align-items:center; width:120px; }
+.pod-crown { font-size:34px; line-height:1; height:40px; filter:drop-shadow(0 3px 5px rgba(212,164,55,.55)); transition:opacity .4s; }
+.pod-name { font-weight:800; font-size:18px; color:var(--ink); margin:0 0 8px; }
+.pod-bar { width:100%; border-radius:16px 16px 0 0; display:flex; align-items:flex-start; justify-content:center;
+  padding-top:18px; color:#fff; transition:height .6s cubic-bezier(.22,1,.36,1);
+  box-shadow:inset 0 3px 12px rgba(255,255,255,.25), 0 -4px 14px rgba(27,42,74,.08); }
+.pod-num { font-size:38px; font-weight:900; font-variant-numeric:tabular-nums; color:#fff; text-shadow:0 2px 5px rgba(0,0,0,.22); }
+.pod.p1 .pod-bar { background:linear-gradient(180deg,#5b93ff,#1e3a5f); }
+.pod.p2 .pod-bar { background:linear-gradient(180deg,#3fc78f,#1d6b48); }
+.pod.p3 .pod-bar { background:linear-gradient(180deg,#a48fe6,#5b4791); }
+
+/* ---------- MEDALS ---------- */
+.medals { flex:1; display:flex; align-items:stretch; justify-content:center; gap:12px; padding:16px 18px 20px; }
+.medal { flex:1; border-radius:16px; padding:16px 10px 14px; display:flex; flex-direction:column; align-items:center; gap:7px;
+  position:relative; color:#fff; transition:all .6s cubic-bezier(.22,1,.36,1); box-shadow:0 6px 14px rgba(0,0,0,.12); }
+.medal.gold   { background:linear-gradient(160deg,var(--gold-1),var(--gold-2) 60%,var(--gold-3)); transform:translateY(-10px) scale(1.05); z-index:2; }
+.medal.silver { background:linear-gradient(160deg,var(--silver-1),var(--silver-2) 60%,var(--silver-3)); }
+.medal.bronze { background:linear-gradient(160deg,var(--bronze-1),var(--bronze-2) 60%,var(--bronze-3)); }
+.medal-badge { position:absolute; top:9px; left:9px; font-size:17px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.25)); }
+.medal-av { width:58px; height:58px; border-radius:50%; background:rgba(255,255,255,.28); border:2.5px solid rgba(255,255,255,.7);
+  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:22px; color:#fff;
+  position:relative; overflow:hidden; }
+.medal-name { font-weight:800; font-size:15px; text-shadow:0 1px 2px rgba(0,0,0,.18); }
+.medal-lbl { font-size:10.5px; opacity:.9; font-weight:600; }
+.medal-num { font-size:26px; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; text-shadow:0 1px 3px rgba(0,0,0,.2); }
+
+/* ---------- TABLE ---------- */
+.table-panel { flex:1; min-height:0; }
+.thead { display:grid; grid-template-columns:1.5fr 1fr 1fr .7fr 1.15fr 1.15fr; padding:6px 22px; gap:10px; }
+.thead div { font-size:13px; font-weight:800; color:var(--blue-d); }
+.thead .t-name { text-align:right; } .thead .t-num,.thead .t-pct{ text-align:center; }
+.rows { flex:1; overflow:hidden; padding:6px 14px 10px; position:relative; }
+.rows-track { display:flex; flex-direction:column; gap:9px; will-change:transform; }
+.row { display:grid; grid-template-columns:1.5fr 1fr 1fr .7fr 1.15fr 1.15fr; align-items:center; gap:10px;
+  background:#fff; border:1px solid var(--line); border-radius:13px; padding:11px 16px;
+  position:relative; box-shadow:0 2px 8px rgba(27,42,74,.04); flex-shrink:0; }
+.row::before { content:''; position:absolute; right:0; top:12px; bottom:12px; width:5px; border-radius:5px; background:var(--blue); }
+.row.hot::before { background:var(--orange); }
+.r-name { display:flex; align-items:center; gap:12px; }
+.r-av { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:17px; color:#fff; background:var(--blue); flex-shrink:0; box-shadow:0 3px 8px rgba(47,109,240,.3);
+  position:relative; overflow:hidden; }
+.row.hot .r-av { background:var(--orange); box-shadow:0 3px 8px rgba(255,106,44,.35); }
+/* תמונת נציג בעיגול (אם קיימת בתיקיית photos) — אחרת נשארת האות */
+.av-photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.av-letter { position:relative; z-index:0; }
+.r-namet { font-weight:800; font-size:21px; }
+.r-cell { display:flex; flex-direction:column; align-items:center; gap:5px; }
+.r-val { font-weight:800; font-size:22px; font-variant-numeric:tabular-nums; line-height:1.1; }
+.r-bar { width:78%; height:9px; border-radius:6px; background:var(--track); overflow:hidden; }
+.r-bar > i { display:block; height:100%; border-radius:6px; transition:width .7s cubic-bezier(.22,1,.36,1); }
+.bar-fill { background:linear-gradient(90deg,#ff8a4c,var(--orange)); }
+.bar-cool { background:linear-gradient(90deg,#5b8df5,var(--blue)); }
+.bar-track-full > i { width:100% !important; background:#d8dde8; }
+.r-pct { font-size:26px; font-weight:900; font-variant-numeric:tabular-nums; text-align:center; }
+.r-pct.hot { color:var(--orange); } .r-pct.cool { color:var(--blue); }
+.r-money { text-align:center; font-weight:800; font-size:20px; font-variant-numeric:tabular-nums; color:var(--green); white-space:nowrap; }
+.r-money.bonus { color:var(--gold-3); }
+.r-money .cur { font-size:14px; opacity:.7; margin-inline-start:2px; }
+
+.bump { animation:bump .6s ease; }
+@keyframes bump { 0%{transform:scale(1);} 35%{transform:scale(1.18);} 100%{transform:scale(1);} }
+
+/* status / source badge */
+.src { display:none; position:fixed; bottom:8px; left:10px; font-size:10px; color:var(--ink-mute); background:rgba(255,255,255,.7);
+  padding:3px 8px; border-radius:8px; z-index:5; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand">
+    <img class="brand-img" src="logo_trim.png" alt="יש לי זכות">
+  </div>
+  <div class="center-top">
+    <div class="quote" id="quote">"קשה יש רק בלחם, וגם אותו אוכלים."</div>
+    <div class="total-pill"><span class="lbl">סה״כ גיוסים</span><span class="num" id="totalNum">0</span></div>
+  </div>
+  <div class="clock-box">
+    <div class="clock" id="clock">--:--</div>
+    <div class="date-box"><div class="date-greg" id="dateGreg">--</div><div class="date-heb" id="dateHeb">--</div></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="col">
+    <div class="panel table-panel">
+      <div class="panel-head">
+        <div class="panel-title">📊 דירוג נציגים — חי</div>
+        <div class="live-dot">LIVE</div>
+      </div>
+      <div class="thead">
+        <div class="t-name">שם הנציג</div>
+        <div class="t-num">גויסו בפועל</div>
+        <div class="t-num">יעד לקוחות</div>
+        <div class="t-pct">אחוז</div>
+        <div class="t-pct">עמלות</div>
+        <div class="t-pct">בונוס יומי</div>
+      </div>
+      <div class="rows" id="rows"></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="panel" style="flex:1.05">
+      <div class="panel-head">
+        <div class="panel-title">🏆 גיוס לקוחות — מובילים יומי</div>
+        <div class="live-dot">LIVE</div>
+      </div>
+      <div class="podium" id="podium"></div>
+    </div>
+    <div class="panel" style="flex:.95">
+      <div class="panel-head"><div class="panel-title">🚀 מצטייני החודש</div></div>
+      <div class="medals" id="medals"></div>
+    </div>
+  </div>
+</div>
+
+<div class="src" id="src">מצב הדגמה — נתונים לדוגמה</div>
+
+<script src="quotes.js"></script>
+<script src="photos.js"></script>
+<script>
+/* ============================================================
+   הגדרות — כשמפרסמים את הלשונית "דשבורד נציגים" כ-CSV,
+   מדביקים כאן את הקישור (שמסתיים ב-output=csv).
+   כל עוד CSV_URL ריק → רץ במצב הדגמה עם נתונים לדוגמה.
+   ============================================================ */
+const CONFIG = {
+  CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQEYNwPlGBE_KYSCQ8oAsKXYY08DD0dWWgCeu0XS8etNyFni8BlTw4XV0OtWadLuW53lvFzSQ_XF4TP/pub?gid=189272316&single=true&output=csv",
+  REFRESH_MS: 15000,        // רענון כל 15 שניות
+  QUOTE_ROTATE_MS: 15000,   // החלפת משפט מוטיבציה כל 15 שניות
+  SCROLL_SPEED: 32,         // מהירות גלילת הקרוסלה (פיקסלים לשנייה) — גדול יותר = מהיר יותר
+  DEMO: false,              // מצב הדגמה כבוי — מחובר לגיליון אמיתי
+  QUOTE: '"קשה יש רק בלחם, וגם אותו אוכלים."'
+};
+
+/* נתוני דוגמה במבנה האמיתי (שם תצוגה, יעד, גויסו) */
+let DATA = [
+  { name:"אליאור", target:50, actual:31 },
+  { name:"דניאל",  target:50, actual:33 },
+  { name:"ירין",   target:30, actual:16 },
+  { name:"דימה",   target:45, actual:14 },
+  { name:"שחר",    target:40, actual:9  },
+  { name:"לירז",   target:35, actual:12 },
+  { name:"יוסי",   target:30, actual:7  },
+  { name:"אלירן",  target:35, actual:5  },
+  { name:"נעמי",   target:30, actual:4  },
+  { name:"שי",     target:30, actual:6  },
+  { name:"אלי",    target:30, actual:3  },
+  { name:"עדן",    target:25, actual:2  },
+];
+
+let prevPct = {};   // לשמירת אחוז קודם לחיצי הטיקר
+let prevActual = {}; // לזיהוי עלייה (bump)
+// כשמחוברים לגיליון — לא מציירים כלום עד שהנתונים האמיתיים הגיעו (כדי שלא יבזיק נתוני דוגמה)
+let dataReady = !CONFIG.CSV_URL;
+
+const pct = a => a.target>0 ? Math.round(a.actual/a.target*100) : 0;
+const sorted = () => [...DATA].sort((x,y)=> y.actual-x.actual || pct(y)-pct(x));
+const firstLetter = n => (n||"?").trim().charAt(0);
+/* עיגול נציג: מנסה תמונה מתיקיית photos (לפי שם התצוגה), ואם אין — מציג את האות הראשונה.
+   מנסה .jpg ואז .png ואז .jpeg, ואם כלום לא נמצא — נשארת האות. */
+function avatarInner(name){
+  const letter = firstLetter(name);
+  const file = (typeof PHOTOS!=='undefined' && PHOTOS[name]) ? String(PHOTOS[name]).trim() : '';
+  if(file){
+    const src = /^(https?:|data:)/.test(file) ? file : 'photos/'+file;   // base64 / כתובת מלאה / קובץ מקומי
+    return `<span class="av-letter">${letter}</span>`+
+      `<img class="av-photo" src="${src}" alt="" onerror="this.remove()">`;
+  }
+  return `<span class="av-letter">${letter}</span>`;   // אין תמונה — האות הראשונה
+}
+
+/* ---------- שעון + תאריך ---------- */
+function heGematria(n){
+  if(n===15) return 'ט״ו';
+  if(n===16) return 'ט״ז';
+  const ones=['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+  const tens=['','י','כ','ל'];
+  let s = tens[Math.floor(n/10)] + ones[n%10];
+  if(s.length>=2) return s.slice(0,-1)+'״'+s.slice(-1);
+  if(s.length===1) return s+'׳';
+  return s;
+}
+function tickClock(){
+  const now=new Date();
+  document.getElementById('clock').textContent =
+    String(now.getHours()).padStart(2,'0')+":"+String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('dateGreg').textContent =
+    new Intl.DateTimeFormat('he-IL',{day:'2-digit',month:'2-digit',year:'numeric'}).format(now);
+  try {
+    const parts=new Intl.DateTimeFormat('he-u-ca-hebrew',{day:'numeric',month:'long'}).formatToParts(now);
+    const day=parseInt(parts.find(p=>p.type==='day').value,10);
+    let month=(parts.find(p=>p.type==='month').value||'').replace(/^ב/,'');
+    document.getElementById('dateHeb').textContent = heGematria(day)+' ב'+month;
+  } catch(e){ document.getElementById('dateHeb').textContent=''; }
+}
+
+/* ---------- רינדור ---------- */
+function render(){
+  if(!dataReady){ document.getElementById('src').textContent='מתחבר לגיליון…'; return; }  // עד שהנתונים האמיתיים מגיעים — לא מציירים
+  const list = sorted();
+  const total = DATA.reduce((s,a)=>s+a.actual,0);
+  document.getElementById('totalNum').textContent = total;
+
+  renderPodium(list);
+  renderMedals(list);
+  renderTable(list);
+
+  list.forEach(a=>{ prevActual[a.name]=a.actual; prevPct[a.name]=pct(a); });
+}
+
+function renderPodium(list){
+  const td = a => (a.today!==undefined ? a.today : a.actual);     // ספירה יומית
+  const top=[...list].sort((x,y)=> td(y)-td(x) || pct(y)-pct(x)).slice(0,3);  // מובילים יומי
+  const order=[1,0,2]; // מימין לשמאל: 2,1,3 (הראשון באמצע גבוה עם כתר)
+  const cls=['p1','p2','p3'];
+  const heights=[124,98,78];  // גובה קבוע לפי דירוג: 1 הכי גבוה
+  const el=document.getElementById('podium'); el.innerHTML='';
+  order.forEach(rank=>{
+    const a=top[rank]; if(!a) return;
+    const d=document.createElement('div'); d.className='pod '+cls[rank];
+    d.innerHTML=`<div class="pod-crown" style="opacity:${rank===0?1:0}">👑</div>
+      <div class="pod-name">${a.name}</div>
+      <div class="pod-bar" style="height:${heights[rank]}px"><div class="pod-num">${td(a)}</div></div>`;
+    el.appendChild(d);
+  });
+}
+
+function renderMedals(list){
+  const top=list.slice(0,3);   // list כבר ממוין לפי הספירה החודשית (גויסו בפועל)
+  const order=[2,0,1]; // מימין לשמאל: ארד, זהב(אמצע), כסף
+  const styles={0:{c:'gold',b:'🥇'},1:{c:'silver',b:'🥈'},2:{c:'bronze',b:'🥉'}};
+  const el=document.getElementById('medals'); el.innerHTML='';
+  order.forEach(rank=>{
+    const a=top[rank]; if(!a) return;
+    const s=styles[rank];
+    const d=document.createElement('div'); d.className='medal '+s.c;
+    d.innerHTML=`<div class="medal-badge">${s.b}</div>
+      <div class="medal-av">${avatarInner(a.name)}</div>
+      <div class="medal-name">${a.name}</div>
+      <div class="medal-lbl">מכירות החודש</div>
+      <div class="medal-num">${a.actual}+</div>`;
+    el.appendChild(d);
+  });
+}
+
+function money(v){ return '<span class="cur">₪</span>'+ (Number(v)||0).toLocaleString('he-IL'); }
+function rowHTML(a){
+  const p=pct(a); const hot=p>=50;
+  return `<div class="row${hot?' hot':''}" data-name="${a.name}">
+    <div class="r-name"><div class="r-av">${avatarInner(a.name)}</div><div class="r-namet">${a.name}</div></div>
+    <div class="r-cell"><div class="r-val">${a.actual}</div>
+      <div class="r-bar"><i class="${hot?'bar-fill':'bar-cool'}" style="width:${Math.min(100,p)}%"></i></div></div>
+    <div class="r-cell"><div class="r-val">${a.target}</div>
+      <div class="r-bar bar-track-full"><i></i></div></div>
+    <div class="r-pct ${hot?'hot':'cool'}">${p}%</div>
+    <div class="r-money">${money(a.commission)}</div>
+    <div class="r-money bonus">${money(a.bonus)}</div></div>`;
+}
+
+/* קרוסלה — גלילה רציפה אינסופית */
+let carScroll=0, carLast=0, carHalf=0, carOn=false;
+function renderTable(list){
+  const cont=document.getElementById('rows');
+  const sig=list.map(a=>a.name+':'+a.actual+'/'+a.target).join('|');
+  if(cont.dataset.sig===sig) return;   // אין שינוי בנתונים — לא בונים מחדש, הגלילה ממשיכה חלק
+  cont.dataset.sig=sig;
+  const single=list.map(rowHTML).join('');
+  cont.innerHTML='<div class="rows-track" id="rowsTrack">'+single+'</div>';
+  const track=document.getElementById('rowsTrack');
+  carOn = track.scrollHeight > cont.clientHeight + 6;   // לגלול רק אם יש יותר ממה שנכנס
+  if(carOn){
+    track.innerHTML = single + single;                 // הכפלה ללולאה חלקה
+    carHalf = track.scrollHeight/2;
+  } else {
+    carHalf=0; carScroll=0; track.style.transform='';
+  }
+}
+
+function carouselLoop(ts){
+  if(carOn && carHalf>0){
+    if(!carLast) carLast=ts;
+    const dt=ts-carLast; carLast=ts;
+    carScroll += (CONFIG.SCROLL_SPEED||32) * dt/1000;  // פיקסלים לשנייה
+    if(carScroll>=carHalf) carScroll-=carHalf;
+    const t=document.getElementById('rowsTrack');
+    if(t) t.style.transform='translateY('+(-carScroll)+'px)';
+  } else { carLast=0; }
+  requestAnimationFrame(carouselLoop);
+}
+requestAnimationFrame(carouselLoop);
+// אם הטאב יורד לרקע וחוזר — לאפס את שעון הגלילה כדי שלא תהיה קפיצה
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ carLast=0; } });
+
+/* ---------- טעינת נתונים מ-CSV ---------- */
+async function loadCSV(){
+  if(!CONFIG.CSV_URL) return false;
+  try{
+    const res=await fetch(CONFIG.CSV_URL+(CONFIG.CSV_URL.includes('?')?'&':'?')+'_t='+Date.now());
+    const text=await res.text();
+    const parsed=parseCSV(text);
+    if(parsed.length){ DATA=parsed; dataReady=true; document.getElementById('src').textContent='מחובר לגיליון • עודכן '+new Date().toLocaleTimeString('he-IL'); return true; }
+  }catch(e){ document.getElementById('src').textContent='שגיאת חיבור לגיליון — ' + e.message; }
+  return false;
+}
+/* מצפה לעמודות: שם תצוגה, (מפתח), יעד, גויסו  — מזהה לפי כותרות */
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2) return [];
+  const split=l=>l.match(/("([^"]|"")*"|[^,]*)(,|$)/g).slice(0,-1).map(c=>c.replace(/^,|,$/,'').replace(/^"|"$/g,'').replace(/""/g,'"').trim());
+  const head=split(lines[0]).map(h=>h.trim());
+  const idx=(...names)=>head.findIndex(h=> names.some(n=>h.includes(n)));
+  let iName=idx('שם תצוגה','שם נציג','נציג','שם');
+  let iTarget=idx('יעד');
+  let iToday=idx('היום');                 // עמודת "גויסו היום"
+  let iActual=idx('בפועל');               // "גויסו בפועל" (חודשי)
+  if(iActual<0) iActual=head.findIndex((h,i)=> i!==iToday && (h.includes('גויסו')||h.includes('כמות')));
+  let iComm=idx('עמלות','עמלה');           // עמלות
+  let iBonus=idx('בונוס');                 // בונוס יומי
+  if(iName<0) iName=0;
+  const num=v=>parseFloat((v||'0').replace(/[^\d.]/g,''))||0;
+  const out=[];
+  for(let r=1;r<lines.length;r++){
+    const c=split(lines[r]); if(!c[iName]) continue;
+    const name=c[iName].trim(); if(!name) continue;
+    const target=num(c[iTarget]);
+    const actual=num(c[iActual]);
+    const today=iToday>=0 ? num(c[iToday]) : actual;   // אם אין עמודת "היום" — נופלים לחודשי
+    const commission=iComm>=0 ? num(c[iComm]) : 0;
+    const bonus=iBonus>=0 ? num(c[iBonus]) : 0;
+    out.push({name,target,actual,today,commission,bonus});
+  }
+  return out;
+}
+
+/* ---------- מצב הדגמה: מספרים זזים לבד ---------- */
+function demoStep(){
+  const n=1+Math.floor(Math.random()*2);
+  for(let i=0;i<n;i++){
+    const a=DATA[Math.floor(Math.random()*DATA.length)];
+    a.actual+=1; if(a.actual>a.target) a.target=a.actual+5;
+  }
+}
+
+/* ---------- לולאה ראשית ---------- */
+async function refresh(){
+  if(CONFIG.CSV_URL){ await loadCSV(); }
+  else if(CONFIG.DEMO){ demoStep(); }
+  render();
+}
+tickClock(); setInterval(tickClock,1000);
+(async()=>{ await refresh(); })();
+setInterval(refresh, CONFIG.REFRESH_MS);
+
+/* מדידה מחדש (כדי שמספר העותקים יחושב נכון) — אחרי טעינת גופנים, טעינה מלאה, ושינוי גודל */
+function forceRerender(){
+  const r=document.getElementById('rows');   if(r) r.dataset.sig='';
+  const t=document.getElementById('ticker'); if(t) t.dataset.sig='';
+  render();
+}
+window.addEventListener('load', forceRerender);
+window.addEventListener('resize', forceRerender);
+if(document.fonts && document.fonts.ready){ document.fonts.ready.then(forceRerender); }
+
+/* ---------- החלפת משפטי מוטיבציה כל 15 שניות (עם fade) ---------- */
+let quoteIdx=0;
+function showQuote(){
+  const el=document.getElementById('quote'); if(!el) return;
+  if(typeof QUOTES==='undefined' || !QUOTES.length) return;
+  el.textContent = QUOTES[quoteIdx % QUOTES.length];
+}
+function rotateQuote(){
+  if(typeof QUOTES==='undefined' || QUOTES.length<2) return;
+  const el=document.getElementById('quote'); if(!el) return;
+  el.style.opacity='0';
+  setTimeout(()=>{ quoteIdx++; showQuote(); el.style.opacity='1'; }, 480);
+}
+showQuote();
+setInterval(rotateQuote, CONFIG.QUOTE_ROTATE_MS);
+</script>
+</body>
+</html>
