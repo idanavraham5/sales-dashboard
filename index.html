@@ -97,12 +97,12 @@ body {
 
 /* ---------- TABLE ---------- */
 .table-panel { flex:1; min-height:0; }
-.thead { display:grid; grid-template-columns:1.5fr 1fr 1fr .7fr 1.15fr 1.15fr; padding:6px 22px; gap:10px; }
+.thead { display:grid; grid-template-columns:1.4fr .9fr .9fr .62fr 1.05fr 1.05fr .8fr; padding:6px 22px; gap:9px; }
 .thead div { font-size:13px; font-weight:800; color:var(--blue-d); }
 .thead .t-name { text-align:right; } .thead .t-num,.thead .t-pct{ text-align:center; }
 .rows { flex:1; overflow:hidden; padding:6px 14px 10px; position:relative; }
 .rows-track { display:flex; flex-direction:column; gap:9px; will-change:transform; }
-.row { display:grid; grid-template-columns:1.5fr 1fr 1fr .7fr 1.15fr 1.15fr; align-items:center; gap:10px;
+.row { display:grid; grid-template-columns:1.4fr .9fr .9fr .62fr 1.05fr 1.05fr .8fr; align-items:center; gap:9px;
   background:#fff; border:1px solid var(--line); border-radius:13px; padding:11px 16px;
   position:relative; box-shadow:0 2px 8px rgba(27,42,74,.04); flex-shrink:0; }
 .row::before { content:''; position:absolute; right:0; top:12px; bottom:12px; width:5px; border-radius:5px; background:var(--blue); }
@@ -128,6 +128,8 @@ body {
 .r-money { text-align:center; font-weight:800; font-size:20px; font-variant-numeric:tabular-nums; color:var(--green); white-space:nowrap; }
 .r-money.bonus { color:var(--gold-3); }
 .r-money .cur { font-size:14px; opacity:.7; margin-inline-start:2px; }
+.r-late { text-align:center; font-weight:800; font-size:20px; font-variant-numeric:tabular-nums; color:var(--ink-mute); }
+.r-late.has { color:#d92d2d; }
 
 .bump { animation:bump .6s ease; }
 @keyframes bump { 0%{transform:scale(1);} 35%{transform:scale(1.18);} 100%{transform:scale(1);} }
@@ -169,6 +171,7 @@ body {
         <div class="t-pct">אחוז</div>
         <div class="t-pct">עמלות</div>
         <div class="t-pct">בונוס יומי</div>
+        <div class="t-pct">איחורים</div>
       </div>
       <div class="rows" id="rows"></div>
     </div>
@@ -330,7 +333,8 @@ function rowHTML(a){
       <div class="r-bar bar-track-full"><i></i></div></div>
     <div class="r-pct ${hot?'hot':'cool'}">${p}%</div>
     <div class="r-money">${money(a.commission)}</div>
-    <div class="r-money bonus">${money(a.bonus)}</div></div>`;
+    <div class="r-money bonus">${money(a.bonus)}</div>
+    <div class="r-late${(a.late||0)>0?' has':''}">${a.late||0}</div></div>`;
 }
 
 /* קרוסלה — גלילה רציפה אינסופית */
@@ -392,6 +396,7 @@ function parseCSV(text){
   if(iActual<0) iActual=head.findIndex((h,i)=> i!==iToday && (h.includes('גויסו')||h.includes('כמות')));
   let iComm=idx('עמלות','עמלה');           // עמלות
   let iBonus=idx('בונוס');                 // בונוס יומי
+  let iLate=idx('איחורים','איחור');        // איחורים
   if(iName<0) iName=0;
   const num=v=>parseFloat((v||'0').replace(/[^\d.]/g,''))||0;
   const out=[];
@@ -403,7 +408,8 @@ function parseCSV(text){
     const today=iToday>=0 ? num(c[iToday]) : actual;   // אם אין עמודת "היום" — נופלים לחודשי
     const commission=iComm>=0 ? num(c[iComm]) : 0;
     const bonus=iBonus>=0 ? num(c[iBonus]) : 0;
-    out.push({name,target,actual,today,commission,bonus});
+    const late=iLate>=0 ? num(c[iLate]) : 0;
+    out.push({name,target,actual,today,commission,bonus,late});
   }
   return out;
 }
