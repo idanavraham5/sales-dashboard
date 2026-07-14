@@ -97,12 +97,12 @@ body {
 
 /* ---------- TABLE ---------- */
 .table-panel { flex:1; min-height:0; }
-.thead { display:grid; grid-template-columns:1.4fr .9fr .9fr .62fr 1.05fr 1.05fr .8fr; padding:6px 22px; gap:9px; }
+.thead { display:grid; grid-template-columns:1.3fr .82fr .82fr .56fr .78fr 1fr 1fr .7fr; padding:6px 20px; gap:8px; }
 .thead div { font-size:13px; font-weight:800; color:var(--blue-d); }
 .thead .t-name { text-align:right; } .thead .t-num,.thead .t-pct{ text-align:center; }
 .rows { flex:1; overflow:hidden; padding:6px 14px 10px; position:relative; }
 .rows-track { display:flex; flex-direction:column; gap:9px; will-change:transform; }
-.row { display:grid; grid-template-columns:1.4fr .9fr .9fr .62fr 1.05fr 1.05fr .8fr; align-items:center; gap:9px;
+.row { display:grid; grid-template-columns:1.3fr .82fr .82fr .56fr .78fr 1fr 1fr .7fr; align-items:center; gap:8px;
   background:#fff; border:1px solid var(--line); border-radius:13px; padding:11px 16px;
   position:relative; box-shadow:0 2px 8px rgba(27,42,74,.04); flex-shrink:0; }
 .row::before { content:''; position:absolute; right:0; top:12px; bottom:12px; width:5px; border-radius:5px; background:var(--blue); }
@@ -130,6 +130,7 @@ body {
 .r-money .cur { font-size:14px; opacity:.7; margin-inline-start:2px; }
 .r-late { text-align:center; font-weight:800; font-size:20px; font-variant-numeric:tabular-nums; color:var(--ink-mute); }
 .r-late.has { color:#d92d2d; }
+.r-avg { text-align:center; font-weight:800; font-size:21px; font-variant-numeric:tabular-nums; color:var(--purple); }
 
 .bump { animation:bump .6s ease; }
 @keyframes bump { 0%{transform:scale(1);} 35%{transform:scale(1.18);} 100%{transform:scale(1);} }
@@ -169,6 +170,7 @@ body {
         <div class="t-num">גויסו בפועל</div>
         <div class="t-num">יעד לקוחות</div>
         <div class="t-pct">אחוז</div>
+        <div class="t-pct">ממוצע יומי</div>
         <div class="t-pct">עמלות</div>
         <div class="t-pct">בונוס יומי</div>
         <div class="t-pct">איחורים</div>
@@ -323,6 +325,7 @@ function renderMedals(list){
 }
 
 function money(v){ return '<span class="cur">₪</span>'+ (Number(v)||0).toLocaleString('he-IL'); }
+function avgDaily(a){ const day=new Date().getDate(); return ((a.actual||0)/Math.max(1,day)).toFixed(1); }  // ממוצע יומי = חודשי ÷ ימים שעברו
 function rowHTML(a){
   const p=pct(a); const hot=p>=50;
   return `<div class="row${hot?' hot':''}" data-name="${a.name}">
@@ -332,6 +335,7 @@ function rowHTML(a){
     <div class="r-cell"><div class="r-val">${a.target}</div>
       <div class="r-bar bar-track-full"><i></i></div></div>
     <div class="r-pct ${hot?'hot':'cool'}">${p}%</div>
+    <div class="r-avg">${avgDaily(a)}</div>
     <div class="r-money">${money(a.commission)}</div>
     <div class="r-money bonus">${money(a.bonus)}</div>
     <div class="r-late${(a.late||0)>0?' has':''}">${a.late||0}</div></div>`;
