@@ -208,6 +208,7 @@ const CONFIG = {
   CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQEYNwPlGBE_KYSCQ8oAsKXYY08DD0dWWgCeu0XS8etNyFni8BlTw4XV0OtWadLuW53lvFzSQ_XF4TP/pub?gid=189272316&single=true&output=csv",
   REFRESH_MS: 15000,        // רענון כל 15 שניות
   QUOTE_ROTATE_MS: 15000,   // החלפת משפט מוטיבציה כל 15 שניות
+  WORK_DAYS: 22,            // ימי עבודה בחודש — הממוצע היומי = גויסו בפועל ÷ המספר הזה (שנה לפי החודש)
   SCROLL_SPEED: 32,         // מהירות גלילת הקרוסלה (פיקסלים לשנייה) — גדול יותר = מהיר יותר
   DEMO: false,              // מצב הדגמה כבוי — מחובר לגיליון אמיתי
   QUOTE: '"קשה יש רק בלחם, וגם אותו אוכלים."'
@@ -325,7 +326,7 @@ function renderMedals(list){
 }
 
 function money(v){ return '<span class="cur">₪</span>'+ (Number(v)||0).toLocaleString('he-IL'); }
-function avgDaily(a){ const day=new Date().getDate(); return ((a.actual||0)/Math.max(1,day)).toFixed(1); }  // ממוצע יומי = חודשי ÷ ימים שעברו
+function avgDaily(a){ return ((a.actual||0)/Math.max(1,CONFIG.WORK_DAYS||22)).toFixed(1); }  // ממוצע יומי = גויסו בפועל ÷ ימי עבודה בחודש
 function rowHTML(a){
   const p=pct(a); const hot=p>=50;
   return `<div class="row${hot?' hot':''}" data-name="${a.name}">
