@@ -327,6 +327,9 @@ const CONFIG = {
   CELEB_ENABLED: true,      // אנימציית "עסקה נסגרה" כשעולה "גויסו בפועל" של נציג
   CELEB_SECONDS: 7,         // משך הצגת החגיגה לפני חזרה לדשבורד
   CELEB_MAX_JUMP: 3,        // עלייה גדולה מזו בבת אחת = תיקון נתונים בגיליון, לא סגירה — בלי חגיגה
+  CELEB_CONFIRM_POLLS: 2,   // עלייה חייבת להופיע בכמה משיכות רצופות לפני שחוגגים (הגנה מריצוד המטמון של גוגל)
+  CELEB_DOWN_POLLS: 12,     // ירידה מתקבלת כתיקון אמיתי רק אחרי שהחזיקה כך-וכך משיכות רצופות (12×15שנ' = 3 דקות)
+  DATA_CONFIRM_POLLS: 2,    // ייצוב תצוגה: שינוי בנתונים מוצג רק אחרי שחזר זהה בכך-וכך משיכות רצופות
   QUOTE: '"קשה יש רק בלחם, וגם אותו אוכלים."'
 };
 
@@ -508,10 +511,35 @@ async function loadCSV(){
     const res=await fetch(CONFIG.CSV_URL+(CONFIG.CSV_URL.includes('?')?'&':'?')+'_t='+Date.now());
     const text=await res.text();
     const parsed=parseCSV(text);
-    if(parsed.length){ DATA=parsed; dataReady=true; detectDeals(parsed); document.getElementById('src').textContent='מחובר לגיליון • עודכן '+new Date().toLocaleTimeString('he-IL'); return true; }
+    if(parsed.length){
+      detectDeals(parsed);                       // מנוע החגיגות מקבל את הפיד הגולמי — יש לו הגנות ריצוד משלו
+      const stable=stabilizeData(parsed);        // התצוגה מקבלת רק נתונים שאושרו בשתי משיכות רצופות
+      if(stable) DATA=stable;
+      dataReady=true;
+      document.getElementById('src').textContent='מחובר לגיליון • עודכן '+new Date().toLocaleTimeString('he-IL'); return true;
+    }
   }catch(e){ document.getElementById('src').textContent='שגיאת חיבור לגיליון — ' + e.message; }
   return false;
 }
+/* ============================================================
+   ייצוב תצוגה מול ריצוד המטמון של גוגל:
+   אחרי עדכון בגיליון, הפיד המפורסם מגיש כמה דקות לסירוגין גרסה
+   ישנה/חדשה. כדי שהמסך לא יקפוץ הלוך-חזור — שינוי מוצג רק אחרי
+   שחזר זהה DATA_CONFIRM_POLLS משיכות רצופות. הטעינה הראשונה
+   מוצגת מיד. עד לאישור — נשארים על הנתונים הקודמים.
+   ============================================================ */
+let stAccepted=null, stPending=null, stCount=0;
+function stabilizeData(parsed){
+  const sig=JSON.stringify(parsed.map(a=>[a.name,a.target,a.actual,a.today,a.commission,a.bonus,a.late]));
+  if(stAccepted===null){ stAccepted=sig; return parsed; }            // טעינה ראשונה — מציגים מיד
+  if(sig===stAccepted){ stPending=null; stCount=0; return parsed; }  // זהה למה שמוצג — ממשיכים כרגיל
+  if(sig===stPending){ stCount++; } else { stPending=sig; stCount=1; }
+  if(stCount>=(CONFIG.DATA_CONFIRM_POLLS||2)){                       // השינוי החזיק מעמד — מאשרים
+    stAccepted=sig; stPending=null; stCount=0; return parsed;
+  }
+  return null;                                                       // עדיין לא מאושר — המסך נשאר יציב
+}
+
 /* מצפה לעמודות: שם תצוגה, (מפתח), יעד, גויסו  — מזהה לפי כותרות */
 function parseCSV(text){
   const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
@@ -607,17 +635,26 @@ function celPiece(){ const ribbon=Math.random()<.3;
     '--w':celRnd(7,12)+'px', '--h':ribbon?celRnd(20,30)+'px':celRnd(9,15)+'px',
     '--br':ribbon?'4px':(Math.random()<.35?'50%':'2px') }; }
 
+/* לכל נציג נשמר מצב: v=בסיס מאושר, up/down=מוני משיכות רצופות, upVal=הערך הגבוה האחרון.
+   ההגנה המרכזית: הפיד המפורסם של גוגל מרצד בין גרסה ישנה לחדשה כמה דקות אחרי עדכון —
+   לכן עלייה חוגגת רק אחרי שהחזיקה CONFIRM_POLLS משיכות רצופות, והבסיס לעולם לא יורד
+   מריצוד רגעי (רק ירידה יציבה לאורך DOWN_POLLS מתקבלת כתיקון אמיתי). */
 function detectDeals(list){
-  if(CELEB.base===null){ CELEB.base={}; list.forEach(a=>CELEB.base[a.name]=a.actual); return; }
+  if(CELEB.base===null){ CELEB.base={}; list.forEach(a=>CELEB.base[a.name]={v:a.actual, up:0, down:0, upVal:0}); return; }
   list.forEach(a=>{
-    const prev=CELEB.base[a.name];
-    if(prev===undefined){ CELEB.base[a.name]=a.actual; return; }
-    if(a.actual>prev){
-      const d=a.actual-prev;
-      CELEB.base[a.name]=a.actual;   // עדכון הבסיס מיד — אין חגיגה כפולה על אותה סגירה
-      if(CONFIG.CELEB_ENABLED && d<=(CONFIG.CELEB_MAX_JUMP||3))
-        enqueueCeleb({ name:a.name, total:a.actual, delta:d });
-    } else if(a.actual<prev){ CELEB.base[a.name]=a.actual; }
+    const s=CELEB.base[a.name];
+    if(s===undefined){ CELEB.base[a.name]={v:a.actual, up:0, down:0, upVal:0}; return; }
+    if(a.actual>s.v){
+      s.up++; s.upVal=a.actual; s.down=0;
+      if(s.up>=(CONFIG.CELEB_CONFIRM_POLLS||2)){
+        const d=s.upVal-s.v; s.v=s.upVal; s.up=0;
+        if(CONFIG.CELEB_ENABLED && d<=(CONFIG.CELEB_MAX_JUMP||3))
+          enqueueCeleb({ name:a.name, total:s.v, delta:d });
+      }
+    } else if(a.actual<s.v){
+      s.down++; s.up=0;
+      if(s.down>=(CONFIG.CELEB_DOWN_POLLS||12)){ s.v=a.actual; s.down=0; }
+    } else { s.up=0; s.down=0; }
   });
 }
 function enqueueCeleb(item){ CELEB.queue.push(item); pumpCeleb(); }
@@ -666,14 +703,14 @@ function celCount(el, to){
     if(p<1 && document.getElementById('celeb').classList.contains('on')) requestAnimationFrame(step); }
   requestAnimationFrame(step);
 }
-/* בדיקה ידנית בלי לגעת בנתונים: מקש C (או ב בעברית) מדמה חגיגה של נציג אקראי,
+/* בדיקה ידנית בלי לגעת בנתונים: Ctrl+Alt+C מדמה חגיגה של נציג אקראי,
    או מהקונסול: testCeleb('דניאל') */
 window.testCeleb=function(name){
   const a = name ? DATA.find(x=>x.name===name) : DATA[Math.floor(Math.random()*DATA.length)];
   if(a) enqueueCeleb({ name:a.name, total:a.actual||0, delta:1 });
 };
 document.addEventListener('keydown', e=>{
-  if((e.key==='c'||e.key==='C'||e.key==='ב') && dataReady) window.testCeleb();
+  if(e.ctrlKey && e.altKey && (e.key==='c'||e.key==='C') && dataReady) window.testCeleb();
 });
 </script>
 </body>
