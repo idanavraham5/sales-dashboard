@@ -474,7 +474,8 @@ function rowHTML(a){
 let carScroll=0, carLast=0, carHalf=0, carOn=false;
 function renderTable(list){
   const cont=document.getElementById('rows');
-  const sig=list.map(a=>a.name+':'+a.actual+'/'+a.target).join('|');
+  // כולל בונוס ואיחורים — הם מוזנים ידנית ומשתנים בלי שגויסו/יעד ישתנו, אחרת העמודות שלהם היו נתקעות
+  const sig=list.map(a=>a.name+':'+a.actual+'/'+a.target+'/'+(a.bonus||0)+'/'+(a.late||0)).join('|');
   if(cont.dataset.sig===sig) return;   // אין שינוי בנתונים — לא בונים מחדש, הגלילה ממשיכה חלק
   cont.dataset.sig=sig;
   const single=list.map(rowHTML).join('');
