@@ -319,7 +319,10 @@ body {
    ============================================================ */
 const CONFIG = {
   CSV_URL: "https://script.google.com/macros/s/AKfycbw12rfEOC_dGqf9WWN6F-LvfLmzBv5nMH93joaOjuK0PPI7kjqwYgLLq_3WZFdvP6K1/exec",  // Apps Script — סופר מהנתון הגולמי, מזהה חודש לבד, בזמן אמת (ללא מטמון)
-  REFRESH_MS: 8000,         // רענון כל 8 שניות
+  REFRESH_MS: 8000,         // רענון כל 8 שניות בשעות העבודה
+  IDLE_REFRESH_MS: 60000,   // מחוץ לשעות העבודה — כל דקה. המסך דולק 24/7 אבל המשרד לא, וזה מה ששומר אותנו בתוך מכסת גוגל
+  WORK_START_HOUR: 8,       // תחילת שעות העבודה (א׳–ה׳)
+  WORK_END_HOUR: 20,        // סוף שעות העבודה
   MAX_BACKOFF_MS: 60000,    // כשגוגל מחזיר תשובות פגומות — מאיטים עד דקה בין ניסיונות, ואז חוזרים לקצב הרגיל
   QUOTE_ROTATE_MS: 15000,   // החלפת משפט מוטיבציה כל 15 שניות
   WORK_DAYS: null,          // ימי עבודה בחודש: null = חישוב אוטומטי (א׳–ה׳ של החודש הנוכחי). לדריסה ידנית (חודש עם חגים) — שים מספר, למשל 20
@@ -619,10 +622,15 @@ tickClock(); setInterval(tickClock,1000);
 /* לולאת רענון עם האטה מדורגת: כשגוגל מחזיר תשובות פגומות (עומס/מכסה),
    ממשיכים לנסות אבל בקצב הולך ויורד — במקום להציף אותו ולהחמיר את המצב.
    משיכה תקינה אחת מחזירה מיד לקצב הרגיל. */
+function isWorkHours(){                       // א׳–ה׳ בשעות הפעילות
+  const d=new Date(), day=d.getDay(), h=d.getHours();
+  if(day===5 || day===6) return false;        // שישי ושבת
+  return h>=(CONFIG.WORK_START_HOUR||8) && h<(CONFIG.WORK_END_HOUR||20);
+}
 (async function loop(){
   let ok=true;
   try{ ok=await refresh(); }catch(e){ ok=false; }
-  const base=CONFIG.REFRESH_MS||8000;
+  const base = isWorkHours() ? (CONFIG.REFRESH_MS||8000) : (CONFIG.IDLE_REFRESH_MS||60000);
   const wait = ok ? base
     : Math.min(CONFIG.MAX_BACKOFF_MS||60000, base*Math.pow(2, Math.min(badFeedStreak,4)));
   setTimeout(loop, wait);
