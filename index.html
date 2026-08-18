@@ -97,12 +97,12 @@ body {
 
 /* ---------- TABLE ---------- */
 .table-panel { flex:1; min-height:0; }
-.thead { display:grid; grid-template-columns:1.3fr .82fr .82fr .56fr .78fr 1fr 1fr .7fr; padding:6px 20px; gap:8px; }
+.thead { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,.82fr) minmax(0,.82fr) minmax(0,.56fr) minmax(0,.78fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.7fr); padding:6px 20px; gap:8px; }
 .thead div { font-size:13px; font-weight:800; color:var(--blue-d); }
 .thead .t-name { text-align:right; } .thead .t-num,.thead .t-pct{ text-align:center; }
 .rows { flex:1; overflow:hidden; padding:6px 14px 10px; position:relative; }
 .rows-track { display:flex; flex-direction:column; gap:9px; will-change:transform; }
-.row { display:grid; grid-template-columns:1.3fr .82fr .82fr .56fr .78fr 1fr 1fr .7fr; align-items:center; gap:8px;
+.row { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,.82fr) minmax(0,.82fr) minmax(0,.56fr) minmax(0,.78fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.7fr); align-items:center; gap:8px;
   background:#fff; border:1px solid var(--line); border-radius:13px; padding:11px 16px;
   position:relative; box-shadow:0 2px 8px rgba(27,42,74,.04); flex-shrink:0; }
 .row::before { content:''; position:absolute; right:0; top:12px; bottom:12px; width:5px; border-radius:5px; background:var(--blue); }
@@ -131,6 +131,16 @@ body {
 .r-late { text-align:center; font-weight:800; font-size:20px; font-variant-numeric:tabular-nums; color:var(--ink-mute); }
 .r-late.has { color:#d92d2d; }
 .r-avg { text-align:center; font-weight:800; font-size:21px; font-variant-numeric:tabular-nums; color:var(--purple); }
+
+/* שורת "משתמשים מחוקים" — אותו מבנה של שורה רגילה, אבל מעומעמת ובמסגרת
+   מקווקוות, כדי שיהיה ברור שזו שורת סיכום ולא נציג שמתחרה בדירוג */
+.row.removed { background:#fafbfd; border-style:dashed; border-color:#dde3ee; box-shadow:none; }
+.row.removed::before { background:#c9d0dd; }
+.row.removed .r-av { background:#c9d0dd; box-shadow:none; font-size:19px; }
+.row.removed .r-namet { color:var(--ink-soft); }
+.row.removed .r-val { color:var(--ink-soft); }
+.row.removed .r-pct, .row.removed .r-avg,
+.row.removed .r-money, .row.removed .r-late { color:var(--ink-mute); }
 
 .bump { animation:bump .6s ease; }
 @keyframes bump { 0%{transform:scale(1);} 35%{transform:scale(1.18);} 100%{transform:scale(1);} }
@@ -355,6 +365,10 @@ let DATA = [
 
 let prevPct = {};   // לשמירת אחוז קודם לחיצי הטיקר
 let prevActual = {}; // לזיהוי עלייה (bump)
+/* סך כל העסקאות בחודש כפי שנספרו בגיליון הגולמי — כולל נציגים שהוסרו
+   מלשונית התצוגה. null = הפיד לא מספק אותו (Apps Script ישן), ואז
+   מסתכמים רק הנציגים המוצגים, בדיוק כמו קודם. */
+let GRAND_TOTAL = null;
 // כשמחוברים לגיליון — לא מציירים כלום עד שהנתונים האמיתיים הגיעו (כדי שלא יבזיק נתוני דוגמה)
 let dataReady = !CONFIG.CSV_URL;
 
@@ -403,12 +417,20 @@ function tickClock(){
 function render(){
   if(!dataReady){ document.getElementById('src').textContent='מתחבר לגיליון…'; return; }  // עד שהנתונים האמיתיים מגיעים — לא מציירים
   const list = sorted();
-  const total = DATA.reduce((s,a)=>s+a.actual,0);
+  /* הסכום מגיע מהגיליון הגולמי כשהוא זמין, כדי שהסרת נציג מלשונית
+     התצוגה לא תגרע את העסקאות שלו מסך החודש. */
+  const shown = DATA.reduce((s,a)=>s+a.actual,0);
+  const total = GRAND_TOTAL!=null ? GRAND_TOTAL : shown;
   document.getElementById('totalNum').textContent = total;
+
+  /* ההפרש בין הסכום האמיתי לסכום המוצגים = העסקאות של מי שהוסר.
+     מחושב כאן ומצויר כשורה בטבלה בלבד — לעולם לא נכנס ל-DATA, ולכן
+     לא יכול להגיע לפודיום, למדליות או למנוע החגיגות. */
+  const removed = GRAND_TOTAL!=null ? Math.max(0, GRAND_TOTAL - shown) : 0;
 
   renderPodium(list);
   renderMedals(list);
-  renderTable(list);
+  renderTable(list, removed);
 
   list.forEach(a=>{ prevActual[a.name]=a.actual; prevPct[a.name]=pct(a); });
 }
@@ -474,15 +496,30 @@ function rowHTML(a){
     <div class="r-late${(a.late||0)>0?' has':''}">${a.late||0}</div></div>`;
 }
 
+/* שורת "משתמשים מחוקים" — סיכום העסקאות של נציגים שהוסרו מלשונית התצוגה.
+   אותו מבנה של שמונה תאים כמו שורה רגילה, אבל בלי יעד ובלי אחוז: אין לה
+   יעד ואין טעם לדרג אותה מול אנשים. מוצגת רק כשיש בה משהו. */
+function removedRowHTML(n){
+  return `<div class="row removed">
+    <div class="r-name"><div class="r-av">✕</div><div class="r-namet">משתמשים מחוקים</div></div>
+    <div class="r-cell"><div class="r-val">${n}</div></div>
+    <div class="r-cell"><div class="r-val">—</div></div>
+    <div class="r-pct">—</div>
+    <div class="r-avg">—</div>
+    <div class="r-money">—</div>
+    <div class="r-money bonus">—</div>
+    <div class="r-late">—</div></div>`;
+}
+
 /* קרוסלה — גלילה רציפה אינסופית */
 let carScroll=0, carLast=0, carHalf=0, carOn=false;
-function renderTable(list){
+function renderTable(list, removed){
   const cont=document.getElementById('rows');
   // כולל בונוס ואיחורים — הם מוזנים ידנית ומשתנים בלי שגויסו/יעד ישתנו, אחרת העמודות שלהם היו נתקעות
-  const sig=list.map(a=>a.name+':'+a.actual+'/'+a.target+'/'+(a.bonus||0)+'/'+(a.late||0)).join('|');
+  const sig=list.map(a=>a.name+':'+a.actual+'/'+a.target+'/'+(a.bonus||0)+'/'+(a.late||0)).join('|')+'#'+(removed||0);
   if(cont.dataset.sig===sig) return;   // אין שינוי בנתונים — לא בונים מחדש, הגלילה ממשיכה חלק
   cont.dataset.sig=sig;
-  const single=list.map(rowHTML).join('');
+  const single=list.map(rowHTML).join('') + ((removed||0)>0 ? removedRowHTML(removed) : '');
   cont.innerHTML='<div class="rows-track" id="rowsTrack">'+single+'</div>';
   const track=document.getElementById('rowsTrack');
   carOn = track.scrollHeight > cont.clientHeight + 6;   // לגלול רק אם יש יותר ממה שנכנס
@@ -543,7 +580,7 @@ async function loadCSV(){
     if(parsed.length){
       detectDeals(parsed);                       // מנוע החגיגות מקבל את הפיד הגולמי — יש לו הגנות ריצוד משלו
       const stable=stabilizeData(parsed);        // התצוגה מקבלת רק נתונים שאושרו בשתי משיכות רצופות
-      if(stable) DATA=stable;
+      if(stable){ DATA=stable; GRAND_TOTAL = (stable.grand!=null && stable.grand>0) ? stable.grand : null; }
       dataReady=true;
       document.getElementById('src').textContent='מחובר לגיליון • עודכן '+new Date().toLocaleTimeString('he-IL'); return true;
     }
@@ -584,6 +621,7 @@ function parseCSV(text){
   let iComm=idx('עמלות','עמלה');           // עמלות
   let iBonus=idx('בונוס');                 // בונוס יומי
   let iLate=idx('איחורים','איחור');        // איחורים
+  let iGrand=idx('סך הכל כללי');           // סך כל העסקאות בחודש, כולל נציגים שהוסרו מהתצוגה
   if(iName<0) iName=0;
   const num=v=>parseFloat((v||'0').replace(/[^\d.]/g,''))||0;
   const out=[];
@@ -597,7 +635,11 @@ function parseCSV(text){
     const bonus=iBonus>=0 ? num(c[iBonus]) : 0;
     const late=iLate>=0 ? num(c[iLate]) : 0;
     out.push({name,target,actual,today,commission,bonus,late});
+    /* הסכום הכללי זהה בכל השורות — נלקח מהראשונה שנקראה. אם הפיד עדיין
+       ישן ואין בו את העמודה, נשאר null והתצוגה מתנהגת בדיוק כמו קודם. */
+    if(out.grand===undefined && iGrand>=0) out.grand=num(c[iGrand]);
   }
+  if(out.grand===undefined) out.grand=null;
   return out;
 }
 
