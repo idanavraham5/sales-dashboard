@@ -335,6 +335,7 @@ const CONFIG = {
   WORK_END_HOUR: 20,        // סוף שעות העבודה
   MAX_BACKOFF_MS: 60000,    // כשגוגל מחזיר תשובות פגומות — מאיטים עד דקה בין ניסיונות, ואז חוזרים לקצב הרגיל
   QUOTE_ROTATE_MS: 15000,   // החלפת משפט מוטיבציה כל 15 שניות
+  VERSION_CHECK_MS: 180000, // בדיקה כל 3 דקות אם נפרסה גרסה חדשה של הדף. 0 = לכבות
   WORK_DAYS: null,          // ימי עבודה בחודש: null = חישוב אוטומטי (א׳–ה׳ של החודש הנוכחי). לדריסה ידנית (חודש עם חגים) — שים מספר, למשל 20
   SCROLL_SPEED: 32,         // מהירות גלילת הקרוסלה (פיקסלים לשנייה) — גדול יותר = מהיר יותר
   DEMO: false,              // מצב הדגמה כבוי — מחובר לגיליון אמיתי
@@ -799,6 +800,47 @@ window.testCeleb=function(name){
 document.addEventListener('keydown', e=>{
   if(e.ctrlKey && e.altKey && (e.key==='c'||e.key==='C') && dataReady) window.testCeleb();
 });
+
+/* ============================================================
+   רענון אוטומטי אחרי פריסה
+   ------------------------------------------------------------
+   הדשבורד מושך *נתונים* כל 8 שניות, אבל את *הקוד* של עצמו הוא
+   טוען פעם אחת בלבד — כשנפתח. מסך שדולק שבוע מריץ קוד בן שבוע,
+   וממלא אותו במספרים טריים. זה נראה בדיוק כמו תיקון שלא עבד.
+
+   הפתרון: לשאול את השרת אם קובץ ה-HTML השתנה. ה-ETag של Render
+   הוא hash של התוכן, ולכן הוא מתחלף לבד בכל פריסה — אין צורך
+   לתחזק קובץ גרסה שאפשר לשכוח לעדכן.
+   ============================================================ */
+let pageStamp = null;
+
+async function fetchPageStamp(){
+  // query ייחודי עוקף את מטמון ה-CDN (s-maxage=300) ומגיע למקור,
+  // אחרת פריסה חדשה הייתה מתגלה רק אחרי 5 דקות
+  const res = await fetch(location.pathname + '?_v=' + Date.now(), { method:'HEAD', cache:'no-store' });
+  if(!res.ok) return null;
+  return res.headers.get('etag') || res.headers.get('last-modified');
+}
+
+async function checkForNewVersion(){
+  if(location.protocol === 'file:') return;        // נפתח כקובץ מקומי — אין שרת לשאול
+  let stamp;
+  try { stamp = await fetchPageStamp(); }
+  catch(e){ return; }                              // תקלת רשת — לא נוגעים במסך
+  if(!stamp) return;                               // אין ETag — לא מנחשים, לא מרעננים
+  if(pageStamp === null){ pageStamp = stamp; return; }   // מדידת הבסיס הראשונה
+  if(stamp === pageStamp) return;                  // אותה גרסה — אין מה לעשות
+
+  // יש גרסה חדשה. חגיגת "עסקה נסגרה" היא הרגע החשוב על המסך —
+  // לא קוטעים אותה באמצע. מחכים שהתור יתרוקן ומנסים שוב.
+  if(CELEB.active || CELEB.queue.length){ setTimeout(checkForNewVersion, 15000); return; }
+  location.reload();
+}
+
+if(CONFIG.VERSION_CHECK_MS > 0){
+  setTimeout(checkForNewVersion, 4000);            // קביעת בסיס מיד אחרי הטעינה
+  setInterval(checkForNewVersion, CONFIG.VERSION_CHECK_MS);
+}
 </script>
 </body>
 </html>
