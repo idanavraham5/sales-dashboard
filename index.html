@@ -97,12 +97,12 @@ body {
 
 /* ---------- TABLE ---------- */
 .table-panel { flex:1; min-height:0; }
-.thead { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,.82fr) minmax(0,.82fr) minmax(0,.56fr) minmax(0,.78fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.7fr); padding:6px 20px; gap:8px; }
+.thead { display:grid; grid-template-columns:minmax(0,1.18fr) minmax(0,.72fr) minmax(0,.78fr) minmax(0,.78fr) minmax(0,.52fr) minmax(0,.72fr) minmax(0,.94fr) minmax(0,.94fr) minmax(0,.64fr); padding:6px 20px; gap:8px; }
 .thead div { font-size:13px; font-weight:800; color:var(--blue-d); }
 .thead .t-name { text-align:right; } .thead .t-num,.thead .t-pct{ text-align:center; }
 .rows { flex:1; overflow:hidden; padding:6px 14px 10px; position:relative; }
 .rows-track { display:flex; flex-direction:column; gap:9px; will-change:transform; }
-.row { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,.82fr) minmax(0,.82fr) minmax(0,.56fr) minmax(0,.78fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.7fr); align-items:center; gap:8px;
+.row { display:grid; grid-template-columns:minmax(0,1.18fr) minmax(0,.72fr) minmax(0,.78fr) minmax(0,.78fr) minmax(0,.52fr) minmax(0,.72fr) minmax(0,.94fr) minmax(0,.94fr) minmax(0,.64fr); align-items:center; gap:8px;
   background:#fff; border:1px solid var(--line); border-radius:13px; padding:11px 16px;
   position:relative; box-shadow:0 2px 8px rgba(27,42,74,.04); flex-shrink:0; }
 .row::before { content:''; position:absolute; right:0; top:12px; bottom:12px; width:5px; border-radius:5px; background:var(--blue); }
@@ -131,6 +131,29 @@ body {
 .r-late { text-align:center; font-weight:800; font-size:20px; font-variant-numeric:tabular-nums; color:var(--ink-mute); }
 .r-late.has { color:#d92d2d; }
 .r-avg { text-align:center; font-weight:800; font-size:21px; font-variant-numeric:tabular-nums; color:var(--purple); }
+
+/* ---------- מצב שיחה חי ----------
+   גלולה קטנה עם נקודה צבעונית. "בשיחה" ו"מתקשר" פועמים כי הם המצבים
+   שהעין צריכה לתפוס מעבר לחדר; "פנוי" ו"לא מחובר" שקטים בכוונה. */
+.r-stat { display:flex; align-items:center; justify-content:center; }
+/* המידות נגזרות מרוחב המסך — בטלוויזיה הגלולה במלוא גודלה, ובמסך קטן
+   היא מתכווצת במקום שהטקסט "לא מחובר" יגלוש מהתא */
+.stat { display:inline-flex; align-items:center; gap:clamp(4px,.31vw,6px); white-space:nowrap;
+  font-size:clamp(10px,.73vw,14px); font-weight:800;
+  padding:clamp(3px,.26vw,5px) clamp(7px,.62vw,12px);
+  border-radius:99px; border:1px solid; max-width:100%; }
+.stat > i { width:clamp(6px,.47vw,9px); height:clamp(6px,.47vw,9px);
+  border-radius:50%; background:currentColor; flex-shrink:0; }
+
+.stat.st-call  { color:#d92d2d; background:#fdecec; border-color:#f6c9c9; }
+.stat.st-dial  { color:#c2560f; background:#fff1e6; border-color:#f8d3b8; }
+.stat.st-free  { color:#12855a; background:#e8f7f0; border-color:#bfe6d5; }
+.stat.st-break { color:#9a6b00; background:#fdf4e0; border-color:#f0dcae; }
+.stat.st-off   { color:#9aa2b5; background:#f3f5f9; border-color:#e3e7ef; }
+
+/* רק המצבים הפעילים פועמים — אחרת כל הטבלה מרצדת ואי אפשר לקרוא אותה */
+.stat.st-call > i, .stat.st-dial > i { animation:statPulse 1.3s ease-in-out infinite; }
+@keyframes statPulse { 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:.35; transform:scale(.72); } }
 
 /* שורת "משתמשים מחוקים" — אותו מבנה של שורה רגילה, אבל מעומעמת ובמסגרת
    מקווקוות, כדי שיהיה ברור שזו שורת סיכום ולא נציג שמתחרה בדירוג */
@@ -272,6 +295,7 @@ body {
       </div>
       <div class="thead">
         <div class="t-name">שם הנציג</div>
+        <div class="t-pct">מצב</div>
         <div class="t-num">גויסו בפועל</div>
         <div class="t-num">יעד לקוחות</div>
         <div class="t-pct">אחוז</div>
@@ -338,6 +362,14 @@ const CONFIG = {
   VERSION_CHECK_MS: 180000, // בדיקה כל 3 דקות אם נפרסה גרסה חדשה של הדף. 0 = לכבות
   FEED_TRIES: 3,            // כמה ניסיונות למשיכה אחת. גוגל נכשל לסירוגין וניסיון חוזר מצליח
   FEED_RETRY_MS: 400,       // המתנה בין ניסיון לניסיון
+
+  /* ---- מצב שיחה חי, מתוך החייגן ----
+     ה-view חושף שם + סטטוס בלבד. טבלת המשתמשים עצמה חסומה לחלוטין למפתח
+     הזה (נבדק: 401), ולכן אין בעיה שהוא גלוי בדף. סינון "פעימה ישנה"
+     קורה בצד השרת בתוך ה-view. ריק = הפיצ'ר כבוי, הדשבורד עובד כרגיל. */
+  PRESENCE_URL: "https://byrtlcerwisylckgdzuu.supabase.co/rest/v1/agent_presence_public?select=name,status",
+  PRESENCE_KEY: "sb_publishable_Gt83Vt8t0_db42ryoThCzw_MLdDK1L-",
+  PRESENCE_MS: 3000,        // רענון מצב השיחות. קל בהרבה ממשיכת הגיליון
   WORK_DAYS: null,          // ימי עבודה בחודש: null = חישוב אוטומטי (א׳–ה׳ של החודש הנוכחי). לדריסה ידנית (חודש עם חגים) — שים מספר, למשל 20
   SCROLL_SPEED: 32,         // מהירות גלילת הקרוסלה (פיקסלים לשנייה) — גדול יותר = מהיר יותר
   DEMO: false,              // מצב הדגמה כבוי — מחובר לגיליון אמיתי
@@ -389,6 +421,71 @@ function avatarInner(name){
       `<img class="av-photo" src="${src}" alt="" onerror="this.remove()">`;
   }
   return `<span class="av-letter">${letter}</span>`;   // אין תמונה — האות הראשונה
+}
+
+/* ============================================================
+   מצב שיחה חי — מגיע מהחייגן, לא מהגיליון
+   ------------------------------------------------------------
+   שני עולמות עם שמות שונים: בגיליון "אליאור", בחייגן "אליאור נווסו".
+   ההתאמה היא לפי שם פרטי, ובכוונה מחמירה: אם יותר מאדם אחד מתאים
+   (יש שני "דניאל" במערכת) לא מנחשים — פשוט לא מוצג סטטוס.
+   ============================================================ */
+const PRESENCE = new Map();
+const PRESENCE_ALIASES = { 'דניאל': 'דניאל גל' };   // דניאל אלימלך הוא איש הלידים, לא נציג
+
+const STATUS_UI = {
+  incall:    { t:'בשיחה',    c:'st-call'  },
+  dialing:   { t:'מתקשר',    c:'st-dial'  },
+  ringing:   { t:'מתקשר',    c:'st-dial'  },
+  available: { t:'פנוי',     c:'st-free'  },
+  idle:      { t:'פנוי',     c:'st-free'  },
+  break:     { t:'בהפסקה',   c:'st-break' },
+  offline:   { t:'לא מחובר', c:'st-off'   }
+};
+
+function presenceFor(displayName){
+  if(!PRESENCE.size) return null;
+  const alias = PRESENCE_ALIASES[displayName];
+  if(alias) return PRESENCE.get(alias) || null;
+  let hit = null, matches = 0;
+  PRESENCE.forEach((status, full) => {
+    if(full === displayName || full.startsWith(displayName + ' ')){ hit = status; matches++; }
+  });
+  return matches === 1 ? hit : null;    // שם עמום — לא מנחשים
+}
+
+/* מצייר לתוך התאים הקיימים במקום לבנות מחדש את הטבלה: בנייה מחדש כל
+   3 שניות הייתה מאפסת את גלילת הקרוסלה ומקפיצה את המסך. */
+function paintPresence(){
+  document.querySelectorAll('[data-stat-for]').forEach(cell => {
+    const st = presenceFor(cell.dataset.statFor);
+    const ui = st ? STATUS_UI[st] : null;
+    if(!ui){ cell.innerHTML=''; return; }
+    const want = ui.c + '|' + ui.t;
+    if(cell.dataset.shown === want) return;    // אין שינוי — לא נוגעים ב-DOM
+    cell.dataset.shown = want;
+    cell.innerHTML = '<span class="stat '+ui.c+'"><i></i>'+ui.t+'</span>';
+  });
+}
+
+async function loadPresence(){
+  if(!CONFIG.PRESENCE_URL || !CONFIG.PRESENCE_KEY) return;
+  try{
+    const res = await fetch(CONFIG.PRESENCE_URL, {
+      headers: { apikey: CONFIG.PRESENCE_KEY }, cache: 'no-store'
+    });
+    if(!res.ok) return;                        // תקלה — משאירים את מה שמוצג
+    const rows = await res.json();
+    if(!Array.isArray(rows)) return;
+    PRESENCE.clear();
+    rows.forEach(r => { if(r && r.name) PRESENCE.set(String(r.name).trim(), String(r.status || 'offline')); });
+    paintPresence();
+  }catch(e){}                                  // אף פעם לא מפיל את הלוח
+}
+
+if(CONFIG.PRESENCE_MS > 0){
+  loadPresence();
+  setInterval(loadPresence, CONFIG.PRESENCE_MS);
 }
 
 /* ---------- שעון + תאריך ---------- */
@@ -490,6 +587,7 @@ function rowHTML(a){
   const p=pct(a); const hot=p>=50;
   return `<div class="row${hot?' hot':''}" data-name="${a.name}">
     <div class="r-name"><div class="r-av">${avatarInner(a.name)}</div><div class="r-namet">${a.name}</div></div>
+    <div class="r-stat" data-stat-for="${a.name}"></div>
     <div class="r-cell"><div class="r-val">${a.actual}</div>
       <div class="r-bar"><i class="${hot?'bar-fill':'bar-cool'}" style="width:${Math.min(100,p)}%"></i></div></div>
     <div class="r-cell"><div class="r-val">${a.target}</div>
@@ -507,6 +605,7 @@ function rowHTML(a){
 function removedRowHTML(n){
   return `<div class="row removed">
     <div class="r-name"><div class="r-av">✕</div><div class="r-namet">משתמשים מחוקים</div></div>
+    <div class="r-stat"></div>
     <div class="r-cell"><div class="r-val">${n}</div></div>
     <div class="r-cell"><div class="r-val">—</div></div>
     <div class="r-pct">—</div>
@@ -534,6 +633,7 @@ function renderTable(list, removed){
   } else {
     carHalf=0; carScroll=0; track.style.transform='';
   }
+  paintPresence();   // התאים נבנו מחדש וריקים — למלא מיד, בלי לחכות למשיכה הבאה
 }
 
 function carouselLoop(ts){
