@@ -160,7 +160,13 @@ body {
 .row.removed { background:#fafbfd; border-style:dashed; border-color:#dde3ee; box-shadow:none; }
 .row.removed::before { background:#c9d0dd; }
 .row.removed .r-av { background:#c9d0dd; box-shadow:none; font-size:19px; }
-.row.removed .r-namet { color:var(--ink-soft); }
+/* "משתמשים מחוקים" ארוך משם של נציג ונשבר לשתי שורות, מה שהפך את שורת
+   הסיכום לגבוהה ב-34% מכל השאר. שורה אחת תמיד, בגופן שמתכווץ עם המסך,
+   וחיתוך עדין אם בכל זאת צר מדי — כך הגובה זהה לשאר הטבלה. */
+.row.removed .r-name { min-width:0; }
+.row.removed .r-namet { color:var(--ink-soft);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  font-size:clamp(13px,.95vw,18px); }
 .row.removed .r-val { color:var(--ink-soft); }
 .row.removed .r-pct, .row.removed .r-avg,
 .row.removed .r-money, .row.removed .r-late { color:var(--ink-mute); }
