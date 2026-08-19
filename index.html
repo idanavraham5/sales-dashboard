@@ -336,6 +336,8 @@ const CONFIG = {
   MAX_BACKOFF_MS: 60000,    // כשגוגל מחזיר תשובות פגומות — מאיטים עד דקה בין ניסיונות, ואז חוזרים לקצב הרגיל
   QUOTE_ROTATE_MS: 15000,   // החלפת משפט מוטיבציה כל 15 שניות
   VERSION_CHECK_MS: 180000, // בדיקה כל 3 דקות אם נפרסה גרסה חדשה של הדף. 0 = לכבות
+  FEED_TRIES: 3,            // כמה ניסיונות למשיכה אחת. גוגל נכשל לסירוגין וניסיון חוזר מצליח
+  FEED_RETRY_MS: 400,       // המתנה בין ניסיון לניסיון
   WORK_DAYS: null,          // ימי עבודה בחודש: null = חישוב אוטומטי (א׳–ה׳ של החודש הנוכחי). לדריסה ידנית (חודש עם חגים) — שים מספר, למשל 20
   SCROLL_SPEED: 32,         // מהירות גלילת הקרוסלה (פיקסלים לשנייה) — גדול יותר = מהיר יותר
   DEMO: false,              // מצב הדגמה כבוי — מחובר לגיליון אמיתי
@@ -563,30 +565,47 @@ function looksLikeOurFeed(text){
   return first.indexOf(FEED_HEADER)!==-1;                 // שורת הכותרת הנכונה
 }
 
-/* ---------- טעינת נתונים מ-CSV ---------- */
+/* ---------- טעינת נתונים מ-CSV ----------
+   גוגל מגיש את התשובה בשני שלבים: /exec מחזיר הפניה, והתוכן עצמו נמשך
+   מ-googleusercontent. השלב הראשון יציב, אבל השני נכשל לסירוגין ומחזיר
+   דף שגיאה של Drive ("לא ניתן לפתוח את הקובץ כרגע") — נמדד ~50% מהזמן.
+   כל ניסיון מקבל מפתח תוכן חדש, ולכן ניסיון חוזר מיידי כמעט תמיד מצליח:
+   בבדיקה, שלושה ניסיונות הביאו 6/6. רק אם כולם נכשלו נחשב הפיד כשבור,
+   ואז נשמרים הנתונים האחרונים והלולאה מאיטה כמו קודם. */
 let badFeedStreak=0;
+
+async function fetchFeedOnce(){
+  const res=await fetch(CONFIG.CSV_URL+(CONFIG.CSV_URL.includes('?')?'&':'?')+'_t='+Date.now());
+  if(!res.ok) return null;
+  const text=await res.text();
+  return looksLikeOurFeed(text) ? text : null;   // דף HTML של גוגל → null
+}
+
 async function loadCSV(){
   if(!CONFIG.CSV_URL) return false;
-  try{
-    const res=await fetch(CONFIG.CSV_URL+(CONFIG.CSV_URL.includes('?')?'&':'?')+'_t='+Date.now());
-    const text=await res.text();
-    if(!res.ok || !looksLikeOurFeed(text)){               // תשובה פגומה — לא נוגעים במסך
-      badFeedStreak++;
-      const el=document.getElementById('src');
-      if(el) el.textContent='תשובה לא תקינה מהגיליון ('+badFeedStreak+') — מציג את הנתונים האחרונים';
-      return false;
-    }
-    badFeedStreak=0;
-    const parsed=parseCSV(text);
-    if(parsed.length){
-      detectDeals(parsed);                       // מנוע החגיגות מקבל את הפיד הגולמי — יש לו הגנות ריצוד משלו
-      const stable=stabilizeData(parsed);        // התצוגה מקבלת רק נתונים שאושרו בשתי משיכות רצופות
-      if(stable){ DATA=stable; GRAND_TOTAL = (stable.grand!=null && stable.grand>0) ? stable.grand : null; }
-      dataReady=true;
-      document.getElementById('src').textContent='מחובר לגיליון • עודכן '+new Date().toLocaleTimeString('he-IL'); return true;
-    }
-  }catch(e){ document.getElementById('src').textContent='שגיאת חיבור לגיליון — ' + e.message; }
-  return false;
+  const tries=Math.max(1, CONFIG.FEED_TRIES||3);
+  let text=null, used=0;
+  for(let i=0;i<tries;i++){
+    used=i+1;
+    try{ text=await fetchFeedOnce(); }catch(e){ text=null; }
+    if(text) break;
+    if(i<tries-1) await new Promise(r=>setTimeout(r, CONFIG.FEED_RETRY_MS||400));
+  }
+  const el=document.getElementById('src');
+  if(!text){                                     // כל הניסיונות נכשלו — לא נוגעים במסך
+    badFeedStreak++;
+    if(el) el.textContent='תשובה לא תקינה מהגיליון ('+badFeedStreak+') — מציג את הנתונים האחרונים';
+    return false;
+  }
+  badFeedStreak=0;
+  const parsed=parseCSV(text);
+  if(!parsed.length) return false;
+  detectDeals(parsed);                           // מנוע החגיגות מקבל את הפיד הגולמי — יש לו הגנות ריצוד משלו
+  const stable=stabilizeData(parsed);            // התצוגה מקבלת רק נתונים שאושרו
+  if(stable){ DATA=stable; GRAND_TOTAL = (stable.grand!=null && stable.grand>0) ? stable.grand : null; }
+  dataReady=true;
+  if(el) el.textContent='מחובר לגיליון • עודכן '+new Date().toLocaleTimeString('he-IL')+(used>1?' • ניסיון '+used:'');
+  return true;
 }
 /* ============================================================
    ייצוב תצוגה מול ריצוד המטמון של גוגל:
