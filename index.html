@@ -422,7 +422,9 @@ function render(){
   const list = sorted();
   /* הסכום מגיע מהגיליון הגולמי כשהוא זמין, כדי שהסרת נציג מלשונית
      התצוגה לא תגרע את העסקאות שלו מסך החודש. */
-  const shown = DATA.reduce((s,a)=>s+a.actual,0);
+  // רק נציגים שהעסקאות שלהם נספרות באמת. מעביר לידים מוחרג — אחרת
+  // כל עסקה שלו הייתה נספרת פעמיים (אצלו ואצל הסוגר) והסכום היה מתנפח.
+  const shown = DATA.filter(a=>!a.offTotal).reduce((s,a)=>s+a.actual,0);
   const total = GRAND_TOTAL!=null ? GRAND_TOTAL : shown;
   document.getElementById('totalNum').textContent = total;
 
@@ -642,6 +644,7 @@ function parseCSV(text){
   let iBonus=idx('בונוס');                 // בונוס יומי
   let iLate=idx('איחורים','איחור');        // איחורים
   let iGrand=idx('סך הכל כללי');           // סך כל העסקאות בחודש, כולל נציגים שהוסרו מהתצוגה
+  let iOff=idx('לא בסך הכל');              // 1 = מוצג ומתחרה, אבל לא מתווסף לסך הכל
   if(iName<0) iName=0;
   const num=v=>parseFloat((v||'0').replace(/[^\d.]/g,''))||0;
   const out=[];
@@ -654,7 +657,10 @@ function parseCSV(text){
     const commission=iComm>=0 ? num(c[iComm]) : 0;
     const bonus=iBonus>=0 ? num(c[iBonus]) : 0;
     const late=iLate>=0 ? num(c[iLate]) : 0;
-    out.push({name,target,actual,today,commission,bonus,late});
+    /* offTotal — העסקאות שלו כבר נספרו אצל מישהו אחר (מעביר לידים).
+       מוצג ומתחרה כרגיל, אבל לא מצטרף לסכום. */
+    const offTotal = iOff>=0 ? num(c[iOff])===1 : false;
+    out.push({name,target,actual,today,commission,bonus,late,offTotal});
     /* הסכום הכללי זהה בכל השורות — נלקח מהראשונה שנקראה. אם הפיד עדיין
        ישן ואין בו את העמודה, נשאר null והתצוגה מתנהגת בדיוק כמו קודם. */
     if(out.grand===undefined && iGrand>=0) out.grand=num(c[iGrand]);
