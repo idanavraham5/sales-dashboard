@@ -439,15 +439,34 @@ function avatarInner(name){
 const PRESENCE = new Map();
 const PRESENCE_ALIASES = { 'דניאל': 'דניאל גל' };   // דניאל אלימלך הוא איש הלידים, לא נציג
 
+/* החייגן כותב חמישה ערכים בפועל: in_call, dialing, break, available, offline.
+   המפתחות כאן מנורמלים (בלי קו תחתון, אותיות קטנות) כי הערך האמיתי הוא
+   "in_call" — כשהמפה ציפתה ל-"incall" התא פשוט נשאר ריק, ו"בשיחה" לא הופיע
+   על המסך בלי שום שגיאה. הנרמול סוגר את כל משפחת הכתיבים. */
 const STATUS_UI = {
-  incall:    { t:'בשיחה',    c:'st-call'  },
+  incall:    { t:'בשיחה',    c:'st-call'  },   // in_call
+  talking:   { t:'בשיחה',    c:'st-call'  },
   dialing:   { t:'מתקשר',    c:'st-dial'  },
   ringing:   { t:'מתקשר',    c:'st-dial'  },
   available: { t:'פנוי',     c:'st-free'  },
   idle:      { t:'פנוי',     c:'st-free'  },
+  active:    { t:'פנוי',     c:'st-free'  },
   break:     { t:'בהפסקה',   c:'st-break' },
   offline:   { t:'לא מחובר', c:'st-off'   }
 };
+
+/* סטטוס לא מוכר לא ייעלם בשתיקה שוב — הוא ירשם בקונסול פעם אחת,
+   כדי שיהיה אפשר לאתר אותו במקום לגלות שחסר משהו על המסך. */
+const UNKNOWN_SEEN = new Set();
+function statusUI(raw){
+  const key = String(raw || '').toLowerCase().replace(/[\s_-]/g, '');
+  const ui = STATUS_UI[key];
+  if(!ui && raw && !UNKNOWN_SEEN.has(key)){
+    UNKNOWN_SEEN.add(key);
+    console.warn('[dashboard] סטטוס לא מוכר מהחייגן:', raw);
+  }
+  return ui || null;
+}
 
 function presenceFor(displayName){
   if(!PRESENCE.size) return null;
@@ -465,7 +484,7 @@ function presenceFor(displayName){
 function paintPresence(){
   document.querySelectorAll('[data-stat-for]').forEach(cell => {
     const st = presenceFor(cell.dataset.statFor);
-    const ui = st ? STATUS_UI[st] : null;
+    const ui = statusUI(st);
     if(!ui){ cell.innerHTML=''; return; }
     const want = ui.c + '|' + ui.t;
     if(cell.dataset.shown === want) return;    // אין שינוי — לא נוגעים ב-DOM
